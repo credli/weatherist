@@ -6,4 +6,7 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_refresh" android:title="@string/action_refresh"
         android:orderInCategory="200" app:showAsAction="never" />
+    <item android:id="@+id/action_view_in_map" android:title="@string/action_view_in_map"
+        android:orderInCategory="300" app:showAsAction="never" />
+
 </menu>

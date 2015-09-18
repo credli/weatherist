@@ -1,8 +1,10 @@
 package com.noviumcollective.weatherist;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.text.format.Time;
@@ -44,6 +46,18 @@ public class ForecastFragment extends Fragment {
     public ForecastFragment() {
     }
 
+    private void updateWeather() {
+        FetchWeatherTask task = new FetchWeatherTask();
+        task.execute(getUserLocation());
+    }
+
+    private String getUserLocation() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        return location;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,18 +73,37 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.action_refresh) {
-
-            FetchWeatherTask task = new FetchWeatherTask();
-            task.execute("Beirut");
-
+            updateWeather();
             return true;
         }
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            Toast.makeText(getActivity(), "Settings requested", Toast.LENGTH_SHORT).show();
+            //This is an explicit intent!!!
+            //because we are specifying the activity class manually
+            Intent settingsIntent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(settingsIntent);
             return true;
         }
+
+        //open an implicit intent (Google maps)
+        if(id == R.id.action_view_in_map) {
+            Intent mapsIntent = new Intent(Intent.ACTION_VIEW);
+            Uri locationUri = Uri.parse("geo:0,0?").buildUpon()
+                    .appendQueryParameter("q", getUserLocation())
+                    .build();
+            mapsIntent.setData(locationUri);
+            if (mapsIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                startActivity(mapsIntent);
+            }
+        }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        //kick off our heavy work on a separate thread
+        updateWeather();
     }
 
     @Override
@@ -107,10 +140,6 @@ public class ForecastFragment extends Fragment {
             }
         });
 
-        //kick off our heavy work on a separate thread
-        FetchWeatherTask task = new FetchWeatherTask();
-        task.execute("Beirut");
-
         return view;
     }
 
@@ -130,6 +159,17 @@ public class ForecastFragment extends Fragment {
          * Prepare the weather high/lows for presentation.
          */
         private String formatHighLows(double high, double low) {
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = prefs.getString(getString(R.string.pref_unit_key), getString(R.string.pref_unit_default));
+
+            if(unitType.equals("imperial")) {
+                high = (high * 1.8) + 32;
+                low = (low * 1.8) + 32;
+            } else {
+                Log.d(LOG_TAG, "Unit type was determined Metric");
+            }
+
             // For presentation, assume the user doesn't care about tenths of a degree.
             long roundedHigh = Math.round(high);
             long roundedLow = Math.round(low);
