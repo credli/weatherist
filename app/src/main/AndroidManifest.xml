@@ -34,6 +34,20 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.noviumcollective.weatherist.MainActivity" />
         </activity>
+
+        <provider
+            android:authorities="com.noviumcollective.weatherist"
+            android:name=".data.WeatherProvider"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="com.noviumcollective.weatherist.READ_WEATHER"/>
+
     </application>
+
+    <permission
+        android:name="com.noviumcollective.weatherist.READ_WEATHER"
+        android:protectionLevel="dangerous"
+        android:label="Read weather forecast from Weatherist">
+    </permission>
 
 </manifest>
